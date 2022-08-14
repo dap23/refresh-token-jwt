@@ -6,6 +6,9 @@ const User = require("./models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { logger } = require("./middleware/logEvents");
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
 
 const app = express();
 
@@ -22,8 +25,8 @@ const error = (req, res) => {
 };
 
 // Jwt Env
-const ACCESS_TOKEN = "hbashjdqywd17gud2b1bo2819bu2yu1v2b8db7211y2u";
-const REFRESH_TOKEN = "hbashjdqywd17gud2b1askdbyuqwqbdybo2819bu2yu1v2b8db7211y";
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
 
 // controllers & routes
 app.post("/register", async (req, res) => {
@@ -172,9 +175,9 @@ app.get("/users", async (req, res) => {
   }
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 mongoose
-  .connect("mongodb://127.0.0.1:27017/jwt-test")
+  .connect(process.env.MONGO_URI)
   .then(() => {
     app.listen(PORT, () => console.log(`connected to port ${PORT}`));
   })
