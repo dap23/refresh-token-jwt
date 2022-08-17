@@ -1,8 +1,5 @@
-import React from "react";
-import { useRef } from "react";
-import { useEffect } from "react";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import styles from "../styles/home.module.css";
 import axios from "../api/axios";
 import useAuth from "../hooks/useAuth";
@@ -10,6 +7,8 @@ import useAuth from "../hooks/useAuth";
 const Login = () => {
   const { setAuth } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
 
   const [errMsg, setErrMsg] = useState("");
   const [password, setPassword] = useState("");
@@ -30,22 +29,28 @@ const Login = () => {
     e.preventDefault();
     try {
       const res = await axios.post(
-        "/login",
+        "/auth/login",
         { username, password },
         {
           withCredentials: true,
-          headers: { "Content-type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
-      setAuth({ user: res?.data?.user, accessToken: res?.data?.accessToken });
+      const accessToken = res?.data?.accessToken;
+      const user = res?.data?.user;
+      setAuth({ accessToken, user });
       setPassword("");
       setUsername("");
-      navigate("/");
-    } catch (error) {
-      if (error.response.status === 500) {
-        setErrMsg("Internal Server Error");
-      } else if (error.response.status === 404) {
-        setErrMsg("Wrong Credentials!");
+      navigate(from, { replace: true });
+    } catch (err) {
+      if (!err?.originalStatus) {
+        setErrMsg("Server no response");
+      } else if (err.originalStatus === 400) {
+        setErrMsg("Missing username and password");
+      } else if (err.originalStatus === 401) {
+        setErrMsg("Unauthorized");
+      } else if (err.originalStatus === 404) {
+        setErrMsg("Wrong Credentials");
       }
       errRef.current.focus();
     }
